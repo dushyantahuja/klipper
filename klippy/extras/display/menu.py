@@ -1019,7 +1019,7 @@ class MenuManager:
         self._last_encoder_cw_eventtime = 0
         self._last_encoder_ccw_eventtime = 0
         # printer objects
-        self.buttons = self.printer.try_load_module(config, "buttons")
+        self.buttons = self.printer.load_object(config, "buttons")
         # register itself for printer callbacks
         self.printer.add_object('menu', self)
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
@@ -1575,7 +1575,7 @@ class MenuManager:
 
     cmd_DO_help = "Menu do things"
 
-    def cmd_DO_DUMP(self, params):
+    def cmd_DO_DUMP(self, gcmd):
         for key1 in self.parameters:
             if type(self.parameters[key1]) == dict:
                 for key2 in self.parameters[key1]:
@@ -1583,10 +1583,10 @@ class MenuManager:
                         key1, key2,
                         self.parameters[key1].get(key2)
                     )
-                    self.gcode.respond_info(msg)
+                    gcmd.respond_info(msg)
             else:
                 msg = "{0} = {1}".format(key1, self.parameters.get(key1))
-                self.gcode.respond_info(msg)
+                gcmd.respond_info(msg)
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):

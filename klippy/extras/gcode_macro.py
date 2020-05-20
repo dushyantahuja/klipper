@@ -93,7 +93,7 @@ class GCodeMacro:
         name = config.get_name().split()[1]
         self.alias = name.upper()
         self.printer = printer = config.get_printer()
-        gcode_macro = printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = printer.load_object(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.gcode = printer.lookup_object('gcode')
         self.rename_existing = config.get("rename_existing", None)
@@ -138,26 +138,24 @@ class GCodeMacro:
     def get_status(self, eventtime):
         return dict(self.variables)
     cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"
-    def cmd_SET_GCODE_VARIABLE(self, params):
-        variable = self.gcode.get_str('VARIABLE', params)
-        value = self.gcode.get_str('VALUE', params)
+    def cmd_SET_GCODE_VARIABLE(self, gcmd):
+        variable = gcmd.get('VARIABLE')
+        value = gcmd.get('VALUE')
         if variable not in self.variables:
             if variable in self.kwparams:
                 self.kwparams[variable] = value
                 return
-            raise self.gcode.error("Unknown gcode_macro variable '%s'" % (
-                variable,))
+            raise gcmd.error("Unknown gcode_macro variable '%s'" % (variable,))
         try:
             literal = ast.literal_eval(value)
         except ValueError as e:
-            raise self.gcode.error("Unable to parse '%s' as a literal" % (
-                value,))
+            raise gcmd.error("Unable to parse '%s' as a literal" % (value,))
         self.variables[variable] = literal
     cmd_desc = "G-Code macro"
-    def cmd(self, params):
+    def cmd(self, gcmd):
         if self.in_script:
-            raise self.gcode.error(
-                "Macro %s called recursively" % (self.alias,))
+            raise gcmd.error("Macro %s called recursively" % (self.alias,))
+        params = gcmd.get_command_parameters()
         kwparams = dict(self.kwparams)
         kwparams.update(params)
         kwparams.update(self.variables)
